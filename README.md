@@ -12,9 +12,11 @@
 
 ## 📖 简介
 
-**Agent Cleaner Pro（智能体清理大师）** 是一个 Hermes Agent Skill，帮你管理日益增长的对话会话。核心思想：
+**Agent Cleaner Pro（智能体清理大师）** 是一个 Hermes Agent Skill，帮你管理日益增长的对话会话。
 
-> **不是单纯"删对话"，而是"提炼精华 → 归档知识库 → 清理冗余"的三步闭环。**
+核心三步闭环：**提炼精华 → 归档知识库 → 清理冗余**
+
+不只是删对话，而是把有价值的决策、代码、配置提炼出来永久保存，把无用的垃圾清掉。
 
 ### 你是否有这些问题？
 
@@ -42,8 +44,8 @@
 # 从 GitHub 安装
 hermes skills install github:tobiglevent001/agent-cleaner-pro
 
-# 或者手动复制
-cp SKILL.md ~/.hermes/skills/software-development/agent-cleaner-pro/
+# 或手动
+git clone https://github.com/tobiglevent001/agent-cleaner-pro.git ~/.hermes/skills/software-development/agent-cleaner-pro/
 ```
 
 ### 使用
@@ -51,30 +53,24 @@ cp SKILL.md ~/.hermes/skills/software-development/agent-cleaner-pro/
 在 Hermes Agent 中直接说：
 
 ```bash
-# 中文
 🧹 小马，帮我清理一下对话
 🧹 智能体清理大师，扫描一下我的会话
-
-# English
-🧹 Hey, clean up my conversation sessions
 ```
 
-你会看到一份清理报告，然后选择操作即可。
+## 📁 项目结构
 
-### 高级用法
-
-```bash
-# 查看当前会话统计
-hermes sessions stats
-
-# 仅扫描，不执行任何操作
-小马，先扫描一下我的对话，看看哪些需要清理
-
-# 设置每周自动检查（通过 cron）
-小马，帮我设置每周日自动检查对话清理
-
-# 提炼某个重要对话到知识库
-小马，把"GEO监测系统"这个对话提炼出来保存到知识库
+```
+agent-cleaner-pro/
+├── SKILL.md                              ← 主 Skill（工作流入口）
+├── README.md                             ← 本文件
+├── references/
+│   ├── classification-guide.md           ← 分类决策树
+│   ├── distillation-prompt.md            ← 提炼 Prompt 模板
+│   └── cron-setup.md                     ← 定时维护配置指南
+└── templates/
+    ├── cleanup-report.md                 ← 清理报告模板
+    └── knowledge-base/
+        └── summary.md                    ← 知识库条目模板
 ```
 
 ## 📊 会话分类
@@ -91,10 +87,10 @@ hermes sessions stats
 
 | 操作 | 成本 (DeepSeek) |
 |------|----------------|
-| 扫描+全部分类 | ~¥0.001 |
+| 扫描+全部分类 (50会话) | ~¥0.001 |
 | 生成清理清单 | ¥0 (纯 CLI) |
 | 提炼 1 个长会话 | ~¥0.008 |
-| **首次全量清理** | **~¥0.05 (≈$0.007)** |
+| **首次全量清理 (含提炼)** | **~¥0.05** |
 | 每周维护 | ~¥0.002 |
 
 ## 🗺️ 路线图
@@ -108,17 +104,4 @@ hermes sessions stats
 
 ## 📄 License
 
-MIT — 开源免费，欢迎贡献！
-
-## 🤝 如何贡献
-
-1. Fork 本仓库
-2. 创建你的特性分支 (`git checkout -b feature/amazing-feature`)
-3. 提交修改 (`git commit -m 'Add amazing feature'`)
-4. 推送到分支 (`git push origin feature/amazing-feature`)
-5. 创建 Pull Request
-
-## 📞 联系方式
-
-- GitHub Issues: [提交问题](https://github.com/tobiglevent001/agent-cleaner-pro/issues)
-- GitHub Discussions: [参与讨论](https://github.com/tobiglevent001/agent-cleaner-pro/discussions)
+MIT

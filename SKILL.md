@@ -14,7 +14,8 @@ metadata:
 
 ## Overview
 
-Hermes Agent 对话会随着使用不断积累，本 Skill 帮助用户从"不敢清理"变成"智能管理"。核心是三步闭环：
+Hermes Agent 对话会随着使用不断积累。本 Skill 帮助用户从"不敢清理"变成"智能管理"。
+核心三步闭环：
 
 > **提炼精华 → 归档知识库 → 清理冗余**
 
@@ -27,149 +28,225 @@ Based on the reference implementation: https://github.com/tobiglevent001/agent-c
 - 用户说"帮我清理一下对话" / "clean up my sessions"
 - 用户感觉对话太多、session_search 太慢
 - 用户想整理项目知识，把散落在对话中的信息归档
-- 对话超过 30 个，或占用空间超过 20MB
+- 对话超过 30 个，或数据库超过 20MB
 - 用户想设置定期自动清理维护
 
-**Don't use for:** 单个会话的手动查看（用 `hermes sessions browse` 即可）
+**Don't use for:** 单条消息查看（用 `hermes sessions browse`）或紧急调试（先修 bug）
 
-## How It Works
+## Workflow
 
-### 第一阶段：扫描与分类
+本 Skill 严格按 5 阶段流程执行，每个阶段需等待用户确认后再进入下一阶段。
 
-执行 `hermes sessions list` 获取所有会话，然后对每个会话分类：
+### 阶段 1：扫描与分类
 
-| 类型 | 代码 | 特征 | 建议保留 |
-|------|------|------|---------|
-| 📁 长期项目 | PROJECT | 标题含项目名、轮数>20、含代码/架构讨论 | 永久 / 1年+ |
-| 🗑️ 一次性问答 | QUICK_QA | 标题为简单问题、轮数<5、无代码 | 7天 |
-| 🧩 超长混合 | MIXED_LONG | 轮数>20、混合多种话题 | 提炼后删除 |
-| 📋 配置调试 | CONFIG_DEBUG | 标题含配置/调试/切换关键词 | 30天 |
-| ❓ 未分类 | UNKNOWN | 标题为"—"或无明确特征 | 扫描后人工判断 |
+**输入：** 无（自动扫描全部会话）
+**输出：** 分类结果（5 种类型）
 
-### 第二阶段：生成可视化清理清单
+**执行步骤：**
+1. `hermes sessions stats` → 获取总数、消息数、数据库大小
+2. `hermes sessions list --limit 200` → 获取所有会话标题和 ID
+3. 对每个会话按分类规则分类（详见 `references/classification-guide.md`）
 
-类似 CCleaner / 电脑管家风格，按类型分组显示：
+**分类决策树（简版）：**
+```
+会话标题是否为"—"?
+├─ 是 → 查看预览文本
+│   ├─ 含"能用吗/什么模型/测试"等 → QUICK_QA
+│   └─ 含"hermes doctor/配置"等 → CONFIG_DEBUG
+└─ 否 → 查看标题
+    ├─ 含项目名+轮数>20 → PROJECT
+    ├─ 含"配置/调试/切换/升级" → CONFIG_DEBUG
+    ├─ 简单问题(<5字) → QUICK_QA
+    ├─ 混合话题+轮数>20 → MIXED_LONG
+    └─ 其他 → UNKNOWN
+```
 
+**输出示例：**
+```
+📊 扫描完成：49个会话，2584条消息，29.1MB
+```
+
+### 阶段 2：生成可视化清理清单
+
+**输入：** 分类结果
+**输出：** 分类+大小+建议操作的清理报告
+
+**报告格式：**
 ```
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
   🧹 智能体清理大师 — 对话清理报告
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
-📁 长期项目 (建议保留)         3个   15.2 MB
-  [🔒] Smart Model Selector Skill   5.2 MB  🔒
-  [✓] GEO监测系统开发               8.5 MB  永久保留
-  ...
+📁 长期项目 (建议永久保留)          N个   XX MB
+  [🔒] 会话标题1                     XX MB  🔒永久保留
+  [🔒] 会话标题2                     XX MB  🔒永久保留
 
-🗑️ 一次性问答 (建议删除)       8个    1.8 MB
-  [☐] 明天上海什么天气             0.1 MB  ⚡可删
-  ...
+📋 配置调试 (30天后可清理)          N个   XX MB
+  [☐] 会话标题1                     XX MB  ⚡保留至 YYYY-MM-DD
 
-操作: [1] 清理勾选  [2] 全部推荐  [3] 提炼+归档+清理
+🗑️ 一次性问答 (建议立即清理)       N个   XX MB
+  [☐] 会话标题1                     XX MB  ⚡N天前
+
+🧩 超长混合 (需提炼后清理)         N个   XX MB
+  [🔍] 会话标题1                     XX MB  → 待提炼
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+📊 汇总:
+  永久保留:  N个会话 (重要项目)  🔒
+  待提炼:    N个会话 (需先提炼再删)
+  可清理:    N个会话 (XX MB可释放)  ⚡
+
+操作: [1] 清理勾选的内容  [2] 提炼+归档+清理
+      [3] 查看详情  [4] 先备份再清理  [5] 取消
 ```
 
-### 第三阶段：智能提炼
+**关键规则：**
+- 🔒 标记的会话永不进入删除候选（除非用户手动移除白名单）
+- 详细分类规则见 `references/classification-guide.md`
+- 报告模板见 `templates/cleanup-report.md`
 
-对"超长混合"类型会话，执行提炼：
+### 阶段 3：智能提炼
 
+**输入：** 用户选择的 MIXED_LONG 类型会话
+**输出：** 提炼文档包 → 写入 `~/hermes-knowledge/`
+
+**提炼步骤：**
+1. `hermes sessions export --session-id <ID> -` → 导出完整会话
+2. 使用提炼 prompt（见 `references/distillation-prompt.md`）提取关键信息
+3. 创建知识库目录结构
+4. 写入提炼结果
+
+**知识库归档结构：**
+```
+~/hermes-knowledge/
+├── {项目名称-中文}/
+│   ├── meta.json           ← 源会话元数据（ID、时间、模型）
+│   ├── summary.md          ← 会话摘要（做了什么、解决了什么）
+│   ├── decisions.md        ← 关键决策（为什么选A不选B）
+│   ├── code-snippets/      ← 有价值的代码片段
+│   └── architecture.md     ← 架构决策（系统设计、数据流）
+├── index.json              ← 总索引（所有提炼包的可搜索索引）
+```
+
+**提炼输出要求（必须包含）：**
+- ✅ 项目/功能名称
+- ✅ 关键决策及理由（至少 3 条）
+- ✅ 代码片段（如有）
+- ✅ 架构/设计决策（如有）
+- ✅ 配置/参数（如有）
+- ❌ 不要包含闲聊内容
+- ❌ 不要包含原始对话逐字稿
+
+**详细提炼 prompt 模板见 `references/distillation-prompt.md`**
+**知识库模板见 `templates/knowledge-base/`**
+
+### 阶段 4：安全清理
+
+**输入：** 用户确认的清理清单
+**输出：** 已删除的会话 + 释放的磁盘空间
+
+**安全机制（四级防护）：**
+1. **白名单保护** — 🔒 标记的会话永不进删除列表
+2. **二次确认** — 展示"将删除 N 个会话 (X MB)"要求确认
+3. **备份兜底** — 自动建议 `hermes backup`（可选）
+4. **增量删除** — 一次最多删 10 个，分批确认
+
+**执行步骤：**
 ```bash
-hermes sessions export --session-id X - | ...
-# → 读取完整会话 → LLM 提取关键信息
-# → 写入 ~/hermes-knowledge/{project}/
+# 可选：先备份
+hermes backup -o ~/hermes-backup-$(date +%Y%m%d_%H%M%S).zip
+
+# 确认删除
+echo "⚠️ 将删除 N 个会话 (X MB)，不可恢复！确认？(y/N)"
+# 用户输入 y 后执行
+hermes sessions delete --session-id <ID1>
+hermes sessions delete --session-id <ID2>
+# ...
+
+# 验证
+hermes sessions stats
 ```
 
-**提炼包结构：**
-```
-~/hermes-knowledge/{项目名称}/
-├── summary.md         ← 会话摘要
-├── decisions.md       ← 关键决策
-├── code-snippets/     ← 代码片段
-├── architecture.md    ← 架构决策
-└── meta.json          ← 源会话元数据
-```
+### 阶段 5：定时维护（cron）
 
-### 第四阶段：安全清理
+**输入：** 用户同意
+**输出：** cron 定时任务
 
-```bash
-# 执行删除
-hermes sessions delete --session-id X
-
-# 或者批量清理旧会话
-hermes sessions prune --older-than 30 --yes
-```
-
-**安全机制：**
-- 白名单保护（🔒 标记的会话永不删除）
-- 删除前二次确认
-- 可选先用 `hermes backup` 备份
-
-### 第五阶段：定时维护
-
-设置 cron 定期自动扫描：
+**配置流程：**
+1. 询问用户希望的频率
+2. `hermes cron create` 创建任务
+3. 验证任务激活
 
 ```bash
 hermes cron create \
   --schedule "0 10 * * 0" \
-  --name "agent-cleaner-check" \
-  --skill agent-cleaner-pro \
-  --prompt "扫描所有会话，生成清理报告，列出需要关注的内容但不执行删除"
+  --name "agent-cleaner-weekly" \
+  --skills agent-cleaner-pro \
+  --prompt "执行智能体清理大师的阶段1-2：扫描所有会话并生成清理报告。不要执行删除，只输出报告供用户查看。"
 ```
+
+**详细配置指南见 `references/cron-setup.md`**
 
 ## Token Cost Reference
 
-| 操作 | 预估消耗 | 成本 (DeepSeek) |
-|------|---------|----------------|
-| 扫描+分类 (50个会话) | ~6K tokens | ~¥0.001 |
-| 生成清理清单 | 0 (CLI) | ¥0 |
-| 提炼1个长会话 | ~53K tokens | ~¥0.008 |
-| 全量清理 (首次) | ~270K tokens | ~¥0.05 |
-| 每周维护 | ~10K tokens | ~¥0.002 |
+| 操作 | Input Tokens | Output Tokens | 成本 (DeepSeek) |
+|------|-------------|--------------|----------------|
+| 阶段1：扫描+分类(50会话) | ~5K | ~1K | **¥0.001** |
+| 阶段2：生成报告 | 0 (CLI) | 0 | **¥0** |
+| 阶段3：提炼1个长会话 | ~50K | ~3K | **¥0.008** |
+| 阶段3：提炼5个长会话 | ~250K | ~15K | **¥0.04** |
+| 阶段4：执行删除 | 0 (CLI) | 0 | **¥0** |
+| 阶段4：备份(可选) | 0 (CLI) | 0 | **¥0** |
+| 阶段5：cron创建 | <1K | <1K | **¥0.0002** |
+| **首次全量清理合计** | **~260K** | **~17K** | **~¥0.05** |
+| **每周维护** | **~10K** | **~2K** | **~¥0.002** |
 
-## Commands Reference
+## Commands Quick Reference
 
 ```bash
-# 查看所有会话
-hermes sessions list
+# 查看会话
+hermes sessions list --limit 200    # 列出所有会话
+hermes sessions stats               # 查看统计信息
+hermes sessions export --session-id <ID> -   # 导出某个会话
 
-# 查看统计信息
-hermes sessions stats
+# 删除会话
+hermes sessions delete --session-id <ID>     # 删除单个会话
+hermes sessions prune --older-than 30 --yes  # 批量删除旧会话
 
-# 导出某个会话
-hermes sessions export --session-id <ID> -
+# 备份
+hermes backup -o ~/hermes-backup-<DATE>.zip
 
-# 删除某个会话
-hermes sessions delete --session-id <ID>
-
-# 批量删除旧会话
-hermes sessions prune --older-than 30 --yes
-
-# 清理前备份
-hermes backup -o ~/hermes-backup-$(date +%Y%m%d).zip
-
-# 设置定时任务
-hermes cron create ...
+# 定时任务
+hermes cron list                    # 查看已有任务
+hermes cron create ...              # 创建任务
+hermes cron remove <JOB_ID>         # 删除任务
 ```
 
 ## Common Pitfalls
 
-1. **一开始就自动删除** — 任何 cleanup 操作都要先展示清单让用户确认，不搞 silent delete
-2. **忽略白名单** — 重要的项目对话必须用 🔒 保护，防止误删
-3. **提炼不充分** — 长对话提炼时，确保输出包含：决策理由、代码片段、配置文件路径，缺一不可
-4. **只看大小不看价值** — 有些小对话（如配置参数）价值很高，不要因为小就删
-5. **忘了备份** — 大清理前先用 `hermes backup` 备份，给用户留后路
-6. **把用户的记忆（memory）和会话（session）搞混** — memory 是持久化的用户信息，session 是对话记录。本 Skill 只管理 session。
+1. **silent delete** — 任何清理都必须先展示清单让用户确认，绝不自动删除
+2. **白名单遗漏** — 用户说过的项目名/关键词即使没在标题中体现，也要主动询问是否加入白名单
+3. **提炼不完整** — 长对话提炼必须包含：决策理由、代码片段、配置路径、架构图（如有），四者缺一不可
+4. **只按大小判断** — 有些小对话含关键配置参数，价值远大于一堆测试对话。分类优先看内容而非大小
+5. **忘记备份** — 单次删除超过 5 个会话时，先用 `hermes backup` 备份
+6. **memory vs session混淆** — memory 是用户画像/偏好/事实，session 是对话记录。本 Skill 只管理 session，不碰 memory
 
-## Related
+## References
 
-- **GitHub Repository (reference implementation):** https://github.com/tobiglevent001/agent-cleaner-pro
-- **skill-dev-or-not:** This skill was evaluated by skill-dev-or-not before development
+- `references/classification-guide.md` — 详细的会话分类决策树和规则
+- `references/distillation-prompt.md` — 智能提炼的 LLM prompt 模板
+- `references/cron-setup.md` — 定时维护配置指南
+- `templates/cleanup-report.md` — 清理报告模板
+- `templates/knowledge-base/` — 知识库归档模板
 
 ## Verification Checklist
 
-- [ ] 所有会话已扫描并分类
-- [ ] 清理清单已按类型分组展示
-- [ ] 每个会话有大小、类型、建议操作
-- [ ] 用户确认后才执行删除
-- [ ] 重要会话已加入白名单（🔒）
-- [ ] 提炼内容已归档到 ~/hermes-knowledge/
-- [ ] 删除操作已通过二次确认
-- [ ] cron 定时任务（如设置）已验证可用
+- [ ] 阶段1：所有会话已扫描并分类，无遗漏
+- [ ] 阶段2：清理清单已按类型分组展示，每个会话有大小和操作建议
+- [ ] 阶段2：白名单（🔒）正确标记受保护会话
+- [ ] 阶段3：提炼内容包含决策/代码/架构/配置四要素
+- [ ] 阶段3：知识库归档到 ~/hermes-knowledge/，结构完整
+- [ ] 阶段4：用户确认后才执行删除，二次确认生效
+- [ ] 阶段4：批量删除>5个时建议了备份
+- [ ] 阶段5：cron 任务已创建并验证激活
+- [ ] 每个阶段完成后显示了统计对比（before/after）
