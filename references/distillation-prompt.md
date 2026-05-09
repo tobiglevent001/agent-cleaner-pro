@@ -1,86 +1,90 @@
-# Session Distillation Prompt — 会话提炼 Prompt 模板
+# Distillation Prompt / 提炼 Prompt 模板
 
-## Overview
+## Overview / 概述
 
-当需要从长对话中提炼有价值信息时，使用此模板。适用于 MIXED_LONG 类型的会话。
+**Chinese:** 从长对话中提炼有价值信息时使用的 Prompt 模板。适用于 MIXED_LONG 类型会话。
+**English:** LLM prompt template for extracting valuable information from long conversations. Use for MIXED_LONG sessions.
 
-## 输入源
+**Input source / 输入源：** `hermes sessions export --session-id <ID> -`
 
-从 `hermes sessions export --session-id <ID> -` 获取的完整会话 JSON。
+---
 
-## LLM Prompt 模板
+## LLM Prompt Template
 
 ```
-你是一个对话精华提取器。你的任务是从一段 AI 助手与用户的对话中，
-提取所有有价值的信息，输出为结构化的知识文档。
+You are a Conversation Essence Extractor. Your task is to extract all valuable
+information from an AI assistant conversation and output it as structured knowledge.
 
-【输入】
-以下是完整的对话记录（JSON格式），包含 N 轮对话：
+You are also capable of reading and processing Chinese content. If the conversation
+is in Chinese, respond in Chinese. If English, respond in English.
 
-{导出的会话JSON}
+【INPUT / 输入】
+Below is the complete conversation (JSON format) with N rounds:
 
-【输出要求】
-请提取并输出以下内容。注意：只输出结构化结果，不要输出对话原文。
+{exported session JSON}
 
-## 1. 项目/功能名称
-（简短描述这个对话主要做了什么）
+【OUTPUT / 输出要求】
+Extract and output ONLY the following sections. Do NOT output the original conversation.
 
-## 2. 会话概要
-（2-3句话描述：什么背景、要解决什么问题、最终结果是什么）
+## 1. Project/Feature Name / 项目/功能名称
+(Brief description of what this conversation accomplished)
 
-## 3. 关键决策记录
-| 决策 | 选择方案 | 理由 | 影响 |
-|------|---------|------|------|
-| 例：前端框架选型 | Vue3 + Element Plus | 用户熟悉、中文文档好、组件全 | 后续所有开发基于此 |
+## 2. Session Summary / 会话概要
+(2-3 sentences: context, problem to solve, final outcome)
+
+## 3. Key Decisions / 关键决策记录
+| Decision / 决策 | Choice / 方案 | Rationale / 理由 | Impact / 影响 |
+|---|---|---|---|
+| e.g. Frontend framework | Vue3 + Element Plus | User familiar, good CN docs, rich components | Foundation for all future dev |
 | ... | ... | ... | ... |
 
-至少列出 3 条，如果没有就说"本次对话未涉及重大决策"。
+List at least 3. If none, say "No major decisions in this session."
 
-## 4. 有价值的代码片段
-```语言
-# 文件名/用途说明
-代码内容
+## 4. Valuable Code Snippets / 有价值的代码片段
+```language
+# filename / purpose
+code content
 ```
-只提取对后续开发有参考价值的完整代码段。
-不要包含临时调试代码或无意义的示例。
+Only include code that has long-term reference value.
+No temporary debug code or meaningless examples.
 
-## 5. 架构/设计决策
-（系统结构、数据流、组件关系等）
-如果没有就说"本次对话未涉及架构决策"。
+## 5. Architecture/Design Decisions / 架构设计决策
+(System structure, data flow, component relationships, etc.)
+If none, say "No architecture decisions in this session."
 
-## 6. 配置/参数
-（任何有用的配置项、参数值、API密钥提示等）
-如果没有就说"本次对话未涉及配置"。
+## 6. Configuration/Parameters / 配置参数
+(Any useful config values, parameters, API key hints, etc.)
+If none, say "No configuration in this session."
 
-## 7. 经验教训/注意事项
-（如果对话中有踩坑经历、错误修复过程，列出）
-如果没有就说"本次对话未记录经验教训"。
+## 7. Lessons Learned / 经验教训
+(Any pitfalls, bugs, or hard-earned lessons from this session)
+If none, say "No lessons learned in this session."
 
-【质量要求】
-- 准确：只输出对话中确实存在的内容，不要编造
-- 精简：每部分不超过200字（代码除外）
-- 完整：不遗漏任何有长期价值的信息
-- 如果确认整个对话没有任何价值，输出："本对话无长期保留价值"
-```
-
-## 后处理
-
-提炼完成后，将输出写入知识库：
-
-```
-~/hermes-knowledge/{项目名称}/
-├── summary.md        ← 会话概要 + 关键决策
-├── code-snippets/    ← 代码片段（如有）
-├── architecture.md   ← 架构决策（如有）
-└── meta.json         ← 源会话元数据
+【Quality Requirements / 质量要求】
+- Accurate: Only extract content that actually exists in the conversation
+- Concise: Max 200 words per section (code excluded)
+- Complete: Don't miss any long-term valuable information
+- If the entire conversation has no value, output: "This session has no long-term retention value."
 ```
 
-## 质量验证
+---
 
-提炼完成后，自查以下问题：
+## Post-processing / 后处理
 
-- [ ] 项目名称准确，能让人一眼看懂这个对话做什么
-- [ ] 关键决策包含"选了什么"和"为什么选"
-- [ ] 代码片段可独立使用（不依赖对话上下文）
-- [ ] 没有包含对话中的闲聊/客套/错误尝试
-- [ ] 总字数不超过原始对话的 10%
+After distillation, write results to knowledge base:
+
+```
+~/hermes-knowledge/{Project-Name}/
+├── summary.md        ← Summary + key decisions / 概要+关键决策
+├── code-snippets/    ← Code / 代码片段
+├── architecture.md   ← Architecture / 架构决策
+└── meta.json         ← Source metadata / 源元数据
+```
+
+## Quality Check / 质量验证
+
+- [ ] Project name is clear and self-explanatory / 项目名称一目了然
+- [ ] Decisions include "what was chosen" AND "why" / 决策包含"选了什么"和"为什么选"
+- [ ] Code snippets are independently usable / 代码片段可独立使用
+- [ ] No chit-chat, pleasantries, or failed attempts included / 无闲聊内容
+- [ ] Total output < 10% of original conversation size / 总字数不超过原文10%

@@ -1,139 +1,141 @@
-# Session Classification Guide — 会话分类决策手册
+# Classification Guide / 分类决策手册
 
-## Overview
+## Overview / 概述
 
-本手册定义了 Agent Cleaner Pro 的会话分类规则。每个 Hermes 会话按以下维度分类。
+**Chinese:** 每个会话从 3 个维度评估：标题语义、对话规模、内容特征
+**English:** Each session is evaluated on 3 dimensions: title semantics, conversation scale, and content features.
 
-## 分类维度
+| Dimension / 维度 | Source / 数据来源 | Description / 说明 |
+|------------------|-------------------|-------------------|
+| Title / 标题语义 | `hermes sessions list` Title field | 会话标题或"—" |
+| Scale / 对话规模 | `hermes sessions export` message_count | 轮数、Token 数 |
+| Content / 内容特征 | Preview + first message | Keywords / 关键词匹配 |
 
-每个会话从 3 个维度评估：
+---
 
-| 维度 | 数据来源 | 说明 |
-|------|---------|------|
-| 标题语义 | `hermes sessions list` 的 Title | 会话的标题或"—" |
-| 对话规模 | `hermes sessions export` 的 message_count | 轮数、Token 数 |
-| 内容特征 | 预览文本+首条消息 | 关键词匹配 |
+## Classification Decision Tree / 五类分类决策树
 
-## 五类分类决策树
+### Type A: 📁 PROJECT (Long-term Project / 长期项目)
 
-### 类型 A：📁 PROJECT（长期项目）
-
-**识别条件（满足任一即可）：**
+**Criteria / 识别条件（满足任一即可）：**
 ```
-标题含关键词: 开发/系统/项目/复刻/复现/搭建/架构/Skill
-          OR 网站/平台/GEO/监测/monitor(ing)
-          OR 项目名（如 Smart Model Selector）
-对话轮数: message_count >= 15
-          AND
-内容含: 代码/架构/设计/方案/文件/目录/函数
-```
-
-**典型例子：**
-- "Smart Model Selector Skill Review" — 188 messages, 项目开发
-- "网站复刻能力分析" — 代码+架构讨论
-- "GEO监测网站开发" — 系统搭建
-
-**建议操作：** 🔒 永久保留
-**用户决策原则：** 如果用户说"这个项目还在做"→ 永久保留；如果"这个项目已经废弃"→ 可在提炼后归档删除
-
-### 类型 B：🗑️ QUICK_QA（一次性问答）
-
-**识别条件：**
-```
-标题含关键词: 天气/多少/怎么/能不能/可以吗/是什么
-          OR 预览含: 简单问句（<20字）
-对话轮数: message_count < 8
-          AND
-内容特征: 不含代码块、不含方案讨论
+Title contains: 开发/系统/项目/复刻/复现/搭建/架构/Skill
+            OR 网站/平台/GEO/监测/monitor(ing)
+            OR 项目名（如 Smart Model Selector）/ project name
+Rounds: message_count >= 15
+        AND
+Content: 代码/架构/设计/方案/code/architecture/design
 ```
 
-**典型例子：**
-- "明天上海什么天气" — 1轮，简单查询
-- "你可以接入我的IMA数据吗" — 3轮，咨询
-- "1+9等于多少" — 1轮，测试
+**Examples / 典型例子：**
+- "Smart Model Selector Skill Review" — 188 msgs, project development
+- "网站复刻能力分析" — code + architecture discussion
+- "GEO监测网站开发" — system build
 
-**建议操作：** ⚡ 立即清理 / 保留7天后删除
-**安全提醒：** 即使标题像QA，也要检查内容是否引出了有价值的后续对话
+**Action / 建议：** 🔒 Keep forever / 永久保留
+**User decision / 用户决策：** "Project still active" → Forever. "Project abandoned" → Distill then delete.
 
-### 类型 C：🧩 MIXED_LONG（超长混合会话）
+### Type B: 🗑️ QUICK_QA (One-time Q&A / 一次性问答)
 
-**识别条件：**
+**Criteria / 识别条件：**
 ```
-对话轮数: message_count >= 20
-          AND
-内容特征: 话题在3个以上切换
-          OR 同时包含代码+决策+闲聊
-```
-
-**典型例子：**
-- 50轮对话，前10轮问配置，中间20轮开发，后20轮修bug
-- 30轮对话，从问模型开始，到写代码，到讨论架构
-
-**建议操作：** 🔍 先提炼归档 → 再删除原文
-**提炼要求：** 必须提取 决策/代码/架构/配置 四类信息
-
-### 类型 D：📋 CONFIG_DEBUG（配置调试）
-
-**识别条件：**
-```
-标题含关键词: 配置/调试/升级/切换/安装/报错
-          OR 错误/修复/解决/问题/同步/连接
-          OR hermes doctor/upgrade/update/setup
+Title contains: 天气/多少/怎么/能不能/可以吗/是什么/weather/how/can you/what is
+            OR Preview: Simple question (<20 chars)
+Rounds: message_count < 8
+        AND
+Content: No code blocks, no architecture discussion
 ```
 
-**典型例子：**
-- "CLI与Web UI模型同步问题" — 配置调试
-- "Hermes v0.13 Upgrade Guide" — 升级
-- "设置模型上下文长度" — 参数配置
+**Examples / 典型例子：**
+- "明天上海什么天气" / "Weather in Shanghai tomorrow" — 1 round
+- "你可以接入我的IMA数据吗" / "Can you connect to my IMA data" — 3 rounds
+- "1+9等于多少" / "What is 1+9" — 1 round
 
-**建议操作：** 📋 保留30天，确认系统稳定后删除
-**例外：** 如果调试中发现了重要的配置参数或解决方案，应在删除前归档到知识库
+**Action / 建议：** ⚡ Clean now / 立即清理 or Keep 7 days then clean
+**Safety / 安全提醒：** Check if a QA session unexpectedly contains valuable follow-up content.
 
-### 类型 E：❓ UNKNOWN（未分类）
+### Type C: 🧩 MIXED_LONG (Mixed Long Session / 超长混合会话)
 
-**识别条件：** 不属于上述4类的会话，或标题为"—"且预览无法明确判断
-
-**处理流程：**
+**Criteria / 识别条件：**
 ```
-1. 尝试读取首条用户消息判断
-2. 如果还无法判断 → 询问用户"这个会话是什么内容？"
-3. 用户反馈后归类
-```
-
-**建议操作：** ⏳ 暂时保留，等用户确认后分类
-
-## 特殊场景处理
-
-### 场景1：标题为"—"的会话
-
-Hermes 中的无标题会话（标题显示为"—"）通常来自：
-- 快速问答（没来得及生成标题）
-- 刚安装时的测试
-- CLI 模式下的简短交互
-
-**处理策略：**
-```
-看预览文本 →
-  含"能用吗/可以吗/你是/你好/第一次" → QUICK_QA (大概率是初次测试)
-  含"hermes doctor/coffee/hi" → CONFIG_DEBUG 或 QUICK_QA
-  含"代码/写一个/实现/开发" → 读取更多内容，可能为 PROJECT
-  其他 → 标记为 UNKNOWN，询问用户
+Rounds: message_count >= 20
+        AND
+Content: Topic switches >3 times / 话题切换3次以上
+        OR Contains code + decisions + chit-chat
 ```
 
-### 场景2：同一项目多个会话
+**Examples / 典型例子：**
+- 50 rounds: first 10 config, middle 20 dev, last 20 bug fixing
+- 30 rounds: starts with model questions → coding → architecture discussion
 
-同一个项目可能有多个分散的会话（如"Smart Model Selector"同名但有多个）。
-**处理：** 合并提炼为一个知识库条目，删除原始会话。
+**Action / 建议：** 🔍 Distill + archive first → then delete original / 先提炼归档再删除
 
-### 场景3：关键配置参数散落在 QA 会话中
+### Type D: 📋 CONFIG_DEBUG (Configuration/Debugging / 配置调试)
 
-用户可能在"能用什么模型"这种简单问答中透露了重要的配置偏好。
-**处理：** 检查是否有实质内容，如有则提炼归档 → 删除原文。
+**Criteria / 识别条件：**
+```
+Title contains: 配置/调试/升级/切换/安装/报错/config/debug/upgrade
+            OR 错误/修复/解决/问题/同步/连接/error/fix/issue/sync
+            OR hermes doctor/upgrade/update/setup
+```
 
-## 分类置信度打分
+**Examples / 典型例子：**
+- "CLI与Web UI模型同步问题" / "CLI-Web UI sync issue"
+- "Hermes v0.13 Upgrade Guide"
+- "设置模型上下文长度" / "Setting context length"
 
-| 置信度 | 含义 | 处理方式 |
-|--------|------|---------|
-| 高 (>80%) | 分类明确，无需用户确认 | 自动分类，在报告中标注 |
-| 中 (50-80%) | 有模糊空间 | 在报告中标注"建议"，让用户确认 |
-| 低 (<50%) | 无法判断 | 标记为 UNKNOWN，询问用户 |
+**Action / 建议：** 📋 Keep 30 days, delete after system stability confirmed
+**Exception / 例外：** If the session contains valuable config parameters, archive before deletion.
+
+### Type E: ❓ UNKNOWN (Unclassified / 未分类)
+
+**Criteria / 识别条件：** Does not match any of the above 4 types, or title is "—" with unclear preview.
+
+**Process / 处理流程：**
+```
+1. Read first user message for clues
+2. If still unclear → ask user: "What was this session about?"
+3. Reclassify based on user feedback
+```
+
+**Action / 建议：** ⏳ Keep temporarily, classify after user feedback
+
+---
+
+## Special Scenarios / 特殊场景
+
+### Scenario 1: Untitled Sessions ("—")
+
+Hermes untitled sessions usually come from:
+- Quick Q&A (title not yet generated)
+- First-time testing / 首次安装测试
+- Short CLI interactions
+
+**Strategy / 处理策略：**
+```
+Check preview →
+  "can you/hello/first time/能用吗/可以吗/你是/你好/第一次" → QUICK_QA
+  "hermes doctor/config/debug" → CONFIG_DEBUG
+  "code/write/create/写一个/实现/开发" → Read more, likely PROJECT
+  Other → UNKNOWN, ask user
+```
+
+### Scenario 2: Same Project, Multiple Sessions
+
+A project may have multiple sessions (e.g., "Smart Model Selector" repeated).
+**Handle / 处理：** Merge distillation into one knowledge base entry, delete originals.
+
+### Scenario 3: Config Parameters in QA Sessions
+
+User might reveal important config preferences in a seemingly simple QA session.
+**Handle / 处理：** Check for substantive content. If found → distill + archive → delete original.
+
+---
+
+## Confidence Score / 分类置信度
+
+| Score | Meaning / 含义 | Action / 处理 |
+|-------|---------------|--------------|
+| High (>80%) | Clear classification / 分类明确 | Auto-classify, show in report |
+| Medium (50-80%) | Some ambiguity / 有模糊空间 | Mark "suggested" in report, let user confirm |
+| Low (<50%) | Can't determine / 无法判断 | Mark UNKNOWN, ask user |

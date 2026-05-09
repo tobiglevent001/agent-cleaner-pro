@@ -1,40 +1,43 @@
-# Cron Setup Guide — 定时维护配置指南
+# Cron Setup Guide / 定时维护配置指南
 
-## Overview
+## Overview / 概述
 
-配置 Hermes cron 定时任务，让 Agent Cleaner Pro 每周自动扫描会话并生成清理报告。
+**Chinese:** 配置 Hermes cron 定时任务，让 Agent Cleaner Pro 每周自动扫描会话并生成清理报告。
+**English:** Configure Hermes cron to let Agent Cleaner Pro automatically scan sessions and generate cleanup reports on a schedule.
 
-## 配置步骤
+---
 
-### 步骤1：创建 cron 任务
+## Setup Steps / 配置步骤
+
+### Step 1: Create Cron Task / 创建任务
 
 ```bash
 hermes cron create \
   --schedule "0 10 * * 0" \
   --name "agent-cleaner-weekly" \
   --skills agent-cleaner-pro \
-  --prompt "执行智能体清理大师的阶段1-2：扫描所有会话并生成清理报告。不要执行删除，只输出报告供用户查看。"
+  --prompt "Run Agent Cleaner Pro phases 1-2: scan all sessions and generate a cleanup report. Do NOT execute deletion, only output the report for user review."
 ```
 
-**参数说明：**
-| 参数 | 值 | 说明 |
-|------|------|------|
-| `--schedule` | `0 10 * * 0` | cron 表达式：每周日 10:00 |
-| | `0 9 * * 1` | 每周一 9:00 |
-| | `0 8 1 * *` | 每月1日 8:00 |
-| | `0 18 * * 5` | 每周五 18:00（下班前扫一遍） |
-| | `every 7d` | 简单语法：每7天 |
-| `--name` | `agent-cleaner-weekly` | 任务名称，便于管理 |
-| `--skills` | `agent-cleaner-pro` | 加载本 Skill |
-| `--prompt` | (见上) | 任务执行的指令 |
+**Parameters / 参数说明：**
 
-### 步骤2：验证任务
+| Flag / 参数 | Value / 值 | Description / 说明 |
+|-------------|------------|-------------------|
+| `--schedule` | `0 10 * * 0` | Every Sunday 10:00 / 每周日10点 |
+| | `0 9 * * 1` | Every Monday 9:00 / 每周一9点 |
+| | `0 8 1 * *` | 1st of month 8:00 / 每月1日8点 |
+| | `every 7d` | Simple syntax: every 7 days / 每7天 |
+| `--name` | `agent-cleaner-weekly` | Task name / 任务名称 |
+| `--skills` | `agent-cleaner-pro` | Load this skill / 加载本 Skill |
+| `--prompt` | (see above / 见上) | Task instructions / 执行指令 |
+
+### Step 2: Verify Task / 验证任务
 
 ```bash
 hermes cron list
 ```
 
-确认输出包含：
+Expected output / 预期输出：
 ```
   xxx [active]
     Name:      agent-cleaner-weekly
@@ -43,31 +46,35 @@ hermes cron list
     Next run:  2026-05-16T10:00:00+08:00
 ```
 
-### 步骤3：手动测试执行
+### Step 3: Test Run / 手动测试
 
 ```bash
 hermes cron run <JOB_ID>
 ```
 
-### 步骤4：如有需要，暂停/恢复/删除
+### Step 4: Manage / 管理
 
 ```bash
-hermes cron pause <JOB_ID>    # 暂停
-hermes cron resume <JOB_ID>   # 恢复
-hermes cron remove <JOB_ID>   # 删除
+hermes cron pause <JOB_ID>    # Pause / 暂停
+hermes cron resume <JOB_ID>   # Resume / 恢复
+hermes cron remove <JOB_ID>   # Delete / 删除
 ```
 
-## 常用频率配置
+---
 
-| 频率 | Schedule | 适用场景 |
-|------|----------|---------|
-| 每周日 | `0 10 * * 0` | 默认推荐（周日醒来看看） |
-| 每两周 | `0 10 1,15 * *` | 低频用户 |
-| 每月1号 | `0 10 1 * *` | 超低频用户 |
-| 每天 | `0 22 * * *` | 高频用户（建议只扫描不出报告） |
+## Frequency Options / 常用频率
 
-## 安全提醒
+| Schedule | Frequency / 频率 | Best for / 适用场景 |
+|----------|-----------------|-------------------|
+| `0 10 * * 0` | Weekly Sunday / 每周日 | Default / 默认推荐 |
+| `0 10 1,15 * *` | Bi-weekly / 每两周 | Light users / 低频用户 |
+| `0 10 1 * *` | Monthly / 每月 | Minimal users / 超低频 |
+| `0 22 * * *` | Daily / 每天 | Heavy users (scan only, no report) / 高频用户 |
 
-- cron 任务只做**扫描+报告**，不做自动删除
-- 所有删除操作都需要用户手动确认
-- 首次执行前，建议用户先手动运行一次完整的阶段1-4体验流程
+---
+
+## Safety / 安全提醒
+
+- Cron tasks only **scan + report**. No automatic deletion. / 只扫描+报告，不自动删除
+- All deletion requires manual user confirmation. / 所有删除需用户手动确认
+- Run the full Phase 1-4 workflow manually at least once before enabling cron. / 首次使用前先手动跑一次全流程

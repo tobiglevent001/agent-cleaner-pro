@@ -1,84 +1,59 @@
-# Agent Cleaner Pro — 清理报告模板
+# Cleanup Report Template / 清理报告模板
 
-## 模板说明
-
-此模板用于阶段2生成可视化清理报告。填充实际的会话数据后展示给用户。
-
-## 模板正文
+## Template / 模板
 
 ```
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-  🧹 智能体清理大师 — 对话清理报告
+  🧹 Agent Cleaner Pro — Cleanup Report / 对话清理报告
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-  生成时间: {YYYY-MM-DD HH:mm}
-  当前状态: {N}个会话, {N}条消息, {N}MB
+  Generated / 生成时间: {YYYY-MM-DD HH:mm}
+  Current state / 当前状态: {N} sessions, {N} messages, {N}MB
 
-📁 长期项目 (建议永久保留)          {N}个   {X}MB
-{每个会话一行:
-  [🔒] {会话标题}                     {X}MB  🔒永久保留
+📁 PROJECTS (Keep Forever / 建议永久保留)         {N}   {X}MB
+{One line per session / 每个会话一行:
+  [🔒] {Session Title}                     {X}MB  🔒Forever
 }
 
-📋 配置调试 (30天后可清理)          {N}个   {X}MB
-{每个会话一行:
-  [☐] {会话标题}                     {X}MB  ⚡保留至 {YYYY-MM-DD}
+📋 CONFIG/DEBUG (Clean after 30d / 30天后可清理)  {N}   {X}MB
+{One line per session:
+  [☐] {Session Title}                     {X}MB  ⚡Keep until {YYYY-MM-DD}
 }
 
-🗑️ 一次性问答 (建议立即清理)       {N}个   {X}MB
-{每个会话一行:
-  [☐] {会话标题}                     {X}MB  ⚡{N}天前
+🗑️ QUICK Q&A (Clean now / 建议立即清理)           {N}   {X}MB
+{One line per session:
+  [☐] {Session Title}                     {X}MB  ⚡{N} days ago
 }
 
-🧩 超长混合 (需提炼后清理)         {N}个   {X}MB
-{每个会话一行:
-  [🔍] {会话标题}                     {X}MB  → 待提炼
+🧩 MIXED LONG (Distill then clean / 需提炼后清理)  {N}   {X}MB
+{One line per session:
+  [🔍] {Session Title}                     {X}MB  → Ready to distill
 }
 
-❓ 未分类 (待确认)                   {N}个   {X}MB
-{每个会话一行:
-  [?] {会话标题/预览}                 {X}MB  → 待分类
+❓ UNKNOWN (Pending classification / 待确认)      {N}   {X}MB
+{One line per session:
+  [?] {Session Title/Preview}              {X}MB  → Need classification
 }
 
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-📊 汇总:
-  永久保留:  {N}个会话 ({X}MB)  🔒
-  待提炼:    {N}个会话 ({X}MB)  🔍
-  可清理:    {N}个会话 ({X}MB)  ⚡
-  未分类:    {N}个会话 ({X}MB)  ❓
-  ─────────────────────────
-  清理后可释放: ~{X}MB / 总 {X}MB ({X}%)
+📊 Summary / 汇总:
+  Keep Forever / 永久保留:    {N} sessions ({X}MB)  🔒
+  To Distill / 待提炼:        {N} sessions ({X}MB)  🔍
+  Can Clean / 可清理:         {N} sessions ({X}MB)  ⚡
+  Unknown / 未分类:           {N} sessions ({X}MB)  ❓
+  ──────────────────────────────
+  Freed after cleanup / 清理后可释放: ~{X}MB / {X}MB total ({X}%)
 
-操作: [1] 清理勾选的内容      [2] 提炼+归档+清理
-      [3] 查看某个会话详情   [4] 先备份再清理
-      [5] 取消
-请选择:
+Options / 操作:
+  [1] Clean selected / 清理勾选内容
+  [2] Distill + archive + clean / 提炼+归档+清理
+  [3] View session details / 查看详情
+  [4] Backup then clean / 先备份再清理
+  [5] Cancel / 取消
 ```
 
-## 使用说明
+## Instructions / 使用说明
 
-1. 用实际扫描数据替换 `{占位符}`
-2. 🔒 标记的会话不生成删除选项
-3. 建议清理的会话默认勾选（[☐]）
-4. 用户选择后，按对应操作执行
-
-## 示例输出
-
-```
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-  🧹 智能体清理大师 — 对话清理报告
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-  生成时间: 2026-05-09 19:30
-  当前状态: 49个会话, 2584条消息, 29.1MB
-
-📁 长期项目 (建议永久保留)          5个   15.2MB
-  [🔒] Smart Model Selector Skill Review    5.2MB  🔒永久保留
-  [🔒] 网站复刻能力分析                     4.8MB  🔒永久保留
-  [🔒] GEO监测网站开发                       3.2MB  🔒永久保留
-  [🔒] Claude Code Task Assignment          1.0MB  🔒永久保留
-  [🔒] 查询开发状态概念术语                  1.0MB  🔒永久保留
-
-📋 配置调试 (30天后可清理)            7个    2.1MB
-  [☐] Hermes服务器进程常驻方法              0.4MB  ⚡保留至 2026-06-08
-  [☐] CLI与Web UI模型同步问题               0.3MB  ⚡保留至 2026-06-08
-  ...
-...
-```
+1. Replace `{placeholders}` with actual scan data / 用实际数据替换占位符
+2. 🔒 sessions have no delete option / 🔒 标记不生成删除选项
+3. Recommended deletions are pre-checked ([☐]) / 建议删除的默认勾选
+4. User selects an option → execute corresponding action / 用户选择后执行对应操作
